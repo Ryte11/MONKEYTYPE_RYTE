@@ -1,0 +1,97 @@
+:root {
+    color-scheme: light dark;
+    --green: #00b755;
+    --yellow: #daaf38;
+    --red: #ca4754;
+    --black: #222;
+    --gray: #999;
+}
+
+body {
+    font-family: monospace;
+    background-color: var(--black);
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+section {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 400px;
+}
+
+time {
+    color: var(--yellow);
+}
+
+input {
+    z-index: -999;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    /* opacity: 0; */
+}
+
+p {
+    width: 100%;
+    height: 30%;
+    letter-spacing: 1px;
+}
+
+letra {
+    color: var(--gray);
+    position: relative;
+}
+
+letra.active::before {
+    content: '|';
+    color: var(--yellow);
+    font-size: 14px;
+    position: absolute;
+    left: -80%;
+    animation: 1s aparicion infinite ease-in-out;
+}
+
+letra.is-last::before {
+    left: 65%;
+}
+
+letra.correct {
+    color: var(--green);
+}
+
+letra.incorrect {
+    color: var(--red);
+}
+
+/* Agregar al final de tu CSS existente */
+.word-space {
+    display: inline-block;
+    width: 0.5em; 
+}
+
+word {
+    display: inline-block; 
+    border-bottom: 2px solid transparent;
+    transition: border-color 0.3s ease-in-out;
+    margin-right: 4px; 
+}
+
+word.marked {
+    border-bottom: 2px solid var(--red);
+}
+
+@keyframes aparicion {
+    0%, 25% {
+        opacity: 1;
+    }
+    75% {
+        opacity: 0;
+    }
+}

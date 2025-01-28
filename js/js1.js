@@ -294,20 +294,76 @@ function onkeydown(event) {
     if (!$currentword) return;
 
     const key = event.key;
+    
+    // Control para retroceso entre palabras
+    if (key === 'Backspace' && $input.value === '') {
+        const $previousWord = $currentword.previousElementSibling?.previousElementSibling;
+        if ($previousWord && $previousWord.classList.contains('marked')) {
+            event.preventDefault();
+            
+            // Remover clases de la palabra actual
+            $currentword.classList.remove('active');
+            $currentword.querySelectorAll('letra').forEach($letra => {
+                $letra.classList.remove('active', 'correct', 'incorrect');
+            });
+            
+            // Restaurar la palabra anterior
+            $previousWord.classList.remove('marked', 'correct');
+            $previousWord.classList.add('active');
+            
+            // Restaurar el estado de las letras
+            const $letras = $previousWord.querySelectorAll('letra');
+            const previousWord = $previousWord.textContent.trim();
+            
+            // Configurar el estado inicial de las letras
+            $letras.forEach(($letra, index) => {
+                $letra.classList.remove('active', 'correct', 'incorrect');
+                if (index < $input.value.length) {
+                    const isCorrect = $input.value[index] === previousWord[index];
+                    $letra.classList.add(isCorrect ? 'correct' : 'incorrect');
+                }
+            });
+            
+            // Activar la última letra
+            const lastIndex = previousWord.length - 1;
+            if (lastIndex >= 0) {
+                $letras[lastIndex].classList.add('active');
+            }
+            
+            // Restaurar el texto en el input y actualizar maxLength
+            $input.value = previousWord;
+            $input.maxLength = previousWord.length;
+            
+            // Actualizar contadores
+            totalWords--;
+            totalChars -= $letras.length;
+            return;
+        }
+        return;
+    }
 
-    if (key === 'Backspace') {
+    // Control para borrado de letras individuales
+    if (key === 'Backspace' && $input.value.length > 0) {
         const $allLetras = $currentword.querySelectorAll('letra');
-        const $currentLetra = $currentword.querySelector('letra.active');
-        if (!$currentLetra) return;
-
-        const currentIndex = Array.from($allLetras).findIndex(letra => 
-            letra.classList.contains('active')
-        );
-
-        if (currentIndex > 0) {
-            $allLetras[currentIndex].classList.remove('active');
-            $allLetras[currentIndex - 1].classList.add('active');
-            $allLetras[currentIndex - 1].classList.remove('correct', 'incorrect');
+        const currentIndex = $input.value.length - 1;
+        const wordText = $currentword.textContent.trim();
+        
+        // Limpiar todas las letras después de la posición actual
+        for (let i = currentIndex; i < $allLetras.length; i++) {
+            $allLetras[i].classList.remove('correct', 'incorrect', 'active');
+        }
+        
+        // Verificar y marcar las letras anteriores
+        for (let i = 0; i < currentIndex; i++) {
+            const isCorrect = $input.value[i] === wordText[i];
+            $allLetras[i].classList.remove('active');
+            $allLetras[i].classList.toggle('correct', isCorrect);
+            $allLetras[i].classList.toggle('incorrect', !isCorrect);
+        }
+        
+        // Activar la letra actual
+        if ($allLetras[currentIndex]) {
+            $allLetras[currentIndex].classList.add('active');
         }
         return;
     }
@@ -315,44 +371,52 @@ function onkeydown(event) {
     if (key === ' ') {
         event.preventDefault();
 
-        // Contar caracteres correctos e incorrectos
+        // Verificar si hay letras incorrectas antes de proceder
         const $letras = $currentword.querySelectorAll('letra');
-        $letras.forEach(letra => {
+        const wordText = $currentword.textContent.trim();
+        const inputText = $input.value;
+        
+        // Solo proceder si la longitud del input coincide con la palabra
+        if (inputText.length !== wordText.length) {
+            return;
+        }
+
+        // Contar caracteres y verificar errores
+        let hasErrors = false;
+        $letras.forEach((letra, index) => {
             totalChars++;
-            if (letra.classList.contains('correct')) {
+            if (inputText[index] === wordText[index]) {
                 correctChars++;
+            } else {
+                hasErrors = true;
             }
         });
         totalWords++;
 
-        // Buscar la siguiente palabra después del span
+        // Buscar la siguiente palabra
         const $wordSpace = $currentword.nextElementSibling;
         if (!$wordSpace) return;
         
         const $nextword = $wordSpace.nextElementSibling;
         if (!$nextword) return;
 
-        // Limpiar clases de la palabra actual
+        // Actualizar clases de la palabra actual
         $currentword.classList.remove('active');
-        const $currentLetra = $currentword.querySelector('letra.active');
-        if ($currentLetra) {
-            $currentLetra.classList.remove('active');
-        }
+        $currentword.querySelectorAll('letra.active').forEach($letra => {
+            $letra.classList.remove('active');
+        });
+        $currentword.classList.add(hasErrors ? 'marked' : 'correct');
 
-        // Activar la siguiente palabra y su primera letra
+        // Preparar la siguiente palabra
         $nextword.classList.add('active');
         const $nextletra = $nextword.querySelector('letra');
         if ($nextletra) {
             $nextletra.classList.add('active');
         }
 
-        // Verificar si hay letras incorrectas
-        const hasMissedLetters = $currentword.querySelectorAll('letra:not(.correct)').length > 0;
-        const classToAdd = hasMissedLetters ? 'marked' : 'correct';
-        $currentword.classList.add(classToAdd);
-
-        // Limpiar el input
+        // Limpiar input y actualizar maxLength
         $input.value = '';
+        $input.maxLength = $nextword.textContent.trim().length;
     }
 }
 
